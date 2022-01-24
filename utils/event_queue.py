@@ -28,9 +28,7 @@ class EventQueue:
 
     def remove(self, event):
         # It removes the event from the event_list. Then, the resulted
-        # event_list is heapified again. 
-        print(self.event_list)
-        print('\n\n\n')
+        # event_list is heapified again.         
         self.event_list.remove(event)
         heapq.heapify(self.event_list)
     

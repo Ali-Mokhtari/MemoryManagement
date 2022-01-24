@@ -14,10 +14,15 @@ class Application:
     def __init__(self, name, models):
         self.name = name
         self.models =  models
-        self.status = AppStatus.MINIMAL 
+        self.status = AppStatus.MINIMAL
+        self.start_time = None
+        self.finish_time = None
+        self.evict_time = None
         self.loaded_model_size = 0
         self.stats = {'requested_times': [], 
-                       'allocated_memory':[],
+                        'finish_times':[],
+                        'evicted_times':[],
+                        'allocated_memory':[],                       
                     }
     
     def __gt__(self, other):

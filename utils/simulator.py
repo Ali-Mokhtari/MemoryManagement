@@ -50,6 +50,17 @@ class Simulator:
             if event.event_type == EventTypes.STARTED:
                 if app.status != AppStatus.AGGRESSIVE:                         
                     self.allocate(app, event.time)
+                else:
+                    for e in config.event_queue.event_list:
+                        if e.event_type == EventTypes.FINISHED and e.event_details.name == app.name:
+                            config.event_queue.remove(e)
+                            app.finish_time = config.time.get_time() + 2 * config.window
+                            app.stats['finish_times'][-1] = app.finish_time
+                            new_event = Event(app.finish_time, EventTypes.FINISHED, app)
+                            config.event_queue.add_event(new_event)
+                            break
+
+
                 s += f'Allocated: {app.loaded_model_size} Free:{config.memory.size}'
             
             elif event.event_type == EventTypes.FINISHED:
@@ -60,31 +71,30 @@ class Simulator:
          
 
     def allocate(self, app, time):
-        allocated = False 
-        
-        
-
-        
+        allocated = False  
         for best_model_size in reversed(app.models):
 
             if best_model_size == app.loaded_model_size:
-                app.status = AppStatus.AGGRESSIVE                
-                event = Event(time+2*config.window, EventTypes.FINISHED, app)
+                app.status = AppStatus.AGGRESSIVE
+                app.start_time = time             
+                app.finish_time = time + 2*config.window 
+                event = Event(app.finish_time, EventTypes.FINISHED, app)
                 config.event_queue.add_event(event)
                 allocated = True
-                print(f'{app.name} @{time} : best model is there')
+                #print(f'{app.name} @{time} : best model is there')
                 break
                                                 
             else:
                 config.memory.release(app.loaded_model_size)
                 app.loaded_model_size = 0.0
-                print(f'{app.name} @{time} : no model')
+                #print(f'{app.name} @{time} : no model')
 
             if best_model_size <= config.memory.free :
                 config.memory.allocate(best_model_size)
                 app.status = AppStatus.AGGRESSIVE
                 app.loaded_model_size = best_model_size
-                event = Event(time+2*config.window, EventTypes.FINISHED, app)
+                app.finish_time = time + 2*config.window 
+                event = Event(app.finish_time, EventTypes.FINISHED, app)
                 config.event_queue.add_event(event)
                 allocated = True                
                 break      
@@ -94,16 +104,17 @@ class Simulator:
                 if is_enough_space:
                     config.memory.allocate(best_model_size)
                     app.status = AppStatus.AGGRESSIVE
+                    app.start_time = time             
+                    app.finish_time = time + 2*config.window 
                     app.loaded_model_size = best_model_size
-                    event = Event(time+2*config.window, EventTypes.FINISHED, app)
+                    event = Event(app.finish_time, EventTypes.FINISHED, app)
                     config.event_queue.add_event(event)
                     allocated = True
                     break
             
-                    
-
-
         app.stats['requested_times'].append(time)
+        app.stats['finish_times'].append(app.finish_time)        
+        app.stats['evicted_times'].append(None)
         app.stats['allocated_memory'].append(app.loaded_model_size)
         
         if not allocated: 
@@ -118,8 +129,13 @@ class Simulator:
             config.memory.release(candid.loaded_model_size)
             candid.loaded_model_size = 0.0 
             candid.status = AppStatus.MINIMAL
-            candid.stats['requested_times'].append(config.time.get_time())
-            candid.stats['allocated_memory'].append(0.0)
+            candid.evict_time = config.time.get_time()
+
+            candid.stats['requested_times'].append(None)
+            candid.stats['finish_times'].append(None)
+            candid.stats['evicted_times'].append(candid.evict_time)
+            candid.stats['allocated_memory'].append(candid.loaded_model_size)
+            
             if config.memory.free >= required_memory:
                 break    
         
@@ -130,17 +146,21 @@ class Simulator:
         candids = []
         for app in  config.apps:
             if app.status != AppStatus.AGGRESSIVE and app.loaded_model_size >0.0:
-                candids.append(app)
+                candids.append(app)        
+        
         return candids
     
     def report(self):
-        df_report = pd.DataFrame(columns = ['app','requested_times',
-        'allocated_memory'])
+        df_report = pd.DataFrame(columns = ['app','requested_times','finish_times',
+        'evicted_times','allocated_memory','best_model'])
         
         for app in config.apps:
-            df = pd.DataFrame(app.stats)
+            
+            df = pd.DataFrame(app.stats)            
             df['app'] = app.name
+            df['best_model'] = app.models[-1]
             df_report = df_report.append(df, ignore_index=True)
+        
         
         max_request_time = df_report['requested_times'].max()
         for app in config.apps:
@@ -152,7 +172,7 @@ class Simulator:
 
 
         df_report = df_report.sort_values(by=['requested_times'])
-        df_report = df_report.reset_index(drop=True)        
+        df_report = df_report.reset_index(drop=True)               
         df_report.to_csv('./output/report.csv', index =False)
     
     def plot_mem_usage(self):
@@ -163,12 +183,3 @@ class Simulator:
         plt.xlabel('Time')
         plt.ylabel('Memory Usage')
         plt.show()
-        
-        
-
-
-            
-            
-
-    
-  

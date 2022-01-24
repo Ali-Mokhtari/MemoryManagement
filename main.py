@@ -11,7 +11,7 @@ from utils.workload import Workload
 
 
 config.init()
-w = Workload().generate(scenario_id = 0, workload_id = 0)
+#w = Workload().generate(scenario_id = 0, workload_id = 0)
 sim = Simulator()
 sim.initialize(0)
 sim.run()

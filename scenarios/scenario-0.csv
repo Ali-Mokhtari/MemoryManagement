@@ -1,6 +1,3 @@
 app,start,end,dist,no_of_request
 app-1,0,1000,interarrival,15
 app-2,0,1000,interarrival,5
-app-3,0,1000,interarrival,10
-app-4,0,1000,interarrival,8
-app-5,0,1000,interarrival,12
