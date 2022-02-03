@@ -180,8 +180,6 @@ class Simulator:
 
         return is_enough_space, picked
     
-     
-    
     def get_2nd_element(self,candid_difference):
         return candid_difference[1]
 
