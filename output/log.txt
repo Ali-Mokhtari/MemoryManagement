@@ -16,11 +16,19 @@ Event: STARTED @310.2  ==>> app-3 Free Memory:100.0
  ******** Provisionally Evict (1700)************
 Candids:
 [   [app-4, 1600]   ]
+current required memory[0]: 1700
+new required memory: 100
+Candids:
+[  ]
 Picked:
 [   [app-4, 1600]   ]
  ******** Provisionally Evict (1500)************
 Candids:
 [   [app-4, 1600]   ]
+current required memory[0]: 1500
+new required memory: -100
+Candids:
+[  ]
 Picked:
 [   [app-4, 1600]   ]
  app-4 EVICTED @310.155
@@ -32,48 +40,90 @@ Event: STARTED @521.2  ==>> app-4 Free Memory:200.0
  ******** Provisionally Evict (1600)************
 Candids:
 [   [app-1, 1500]    [app-2, 1300]    [app-3, 1500]   ]
-Picked:
-[   [app-1, 1500]   ]
- ******** Provisionally Evict (1300)************
+current required memory[0]: 1600
+new required memory: 100
 Candids:
-[   [app-1, 1500]    [app-2, 1300]    [app-3, 1500]   ]
+[   [app-2, 1300]    [app-3, 1500]   ]
+current required memory[1]: 100
+new required memory: -1200
+Candids:
+[   [app-3, 1500]   ]
 Picked:
-[   [app-2, 1300]   ]
+[   [app-1, 1500]    [app-2, 1300]   ]
+ app-1 EVICTED @521.185
  app-2 EVICTED @521.185
-A model of size 1300 was allocated to app-4
-Event: STARTED @533.7  ==>> app-1 Free Memory:200.0
+A model of size 1600 was allocated to app-4
+Event: STARTED @533.7  ==>> app-1 Free Memory:1400.0
+ ******** Provisionally Evict (1500)************
+Candids:
+[   [app-3, 1500]   ]
+current required memory[0]: 1500
+new required memory: 0
+Candids:
+[  ]
+Picked:
+[   [app-3, 1500]   ]
+ app-3 EVICTED @533.735
 A model of size 1500 was allocated to app-1
-Event: STARTED @564.4  ==>> app-3 Free Memory:200.0
-A model of size 1700 was allocated to app-3
-Event: FINISHED @621.2  ==>> app-4 Free Memory:0.0
-Event: FINISHED @633.7  ==>> app-1 Free Memory:0.0
-Event: FINISHED @664.4  ==>> app-3 Free Memory:0.0
-Event: STARTED @683.8  ==>> app-3 Free Memory:0.0
-A model of size 1700 was allocated to app-3
-Event: FINISHED @783.8  ==>> app-3 Free Memory:0.0
-Event: STARTED @866.5  ==>> app-5 Free Memory:0.0
+Event: STARTED @564.4  ==>> app-3 Free Memory:1400.0
  ******** Provisionally Evict (1700)************
 Candids:
-[   [app-1, 1500]    [app-3, 1700]    [app-4, 1300]   ]
+[  ]
 Picked:
-[   [app-3, 1700]   ]
- app-3 EVICTED @866.519
+[  ]
+ ******** Provisionally Evict (1500)************
+Candids:
+[  ]
+Picked:
+[  ]
+A model of size 1300 was allocated to app-3
+Event: FINISHED @621.2  ==>> app-4 Free Memory:100.0
+Event: FINISHED @633.7  ==>> app-1 Free Memory:100.0
+Event: FINISHED @664.4  ==>> app-3 Free Memory:100.0
+Event: STARTED @683.8  ==>> app-3 Free Memory:100.0
+ ******** Provisionally Evict (1700)************
+Candids:
+[   [app-1, 1500]    [app-4, 1600]   ]
+current required memory[0]: 1700
+new required memory: 100
+Candids:
+[   [app-1, 1500]   ]
+current required memory[1]: 100
+new required memory: -1400
+Candids:
+[  ]
+Picked:
+[   [app-4, 1600]    [app-1, 1500]   ]
+ app-4 EVICTED @683.762
+ app-1 EVICTED @683.762
+A model of size 1700 was allocated to app-3
+Event: FINISHED @783.8  ==>> app-3 Free Memory:2800.0
+Event: STARTED @866.5  ==>> app-5 Free Memory:2800.0
 A model of size 1700 was allocated to app-5
-Event: STARTED @887.1  ==>> app-4 Free Memory:0.0
+Event: STARTED @887.1  ==>> app-4 Free Memory:1100.0
  ******** Provisionally Evict (1600)************
 Candids:
-[   [app-1, 1500]   ]
+[   [app-3, 1700]   ]
+current required memory[0]: 1600
+new required memory: -100
+Candids:
+[  ]
 Picked:
-[   [app-1, 1500]   ]
-A model of size 1300 was allocated to app-4
-Event: STARTED @933.4  ==>> app-2 Free Memory:0.0
+[   [app-3, 1700]   ]
+ app-3 EVICTED @887.068
+A model of size 1600 was allocated to app-4
+Event: STARTED @933.4  ==>> app-2 Free Memory:1200.0
  ******** Provisionally Evict (1300)************
 Candids:
-[   [app-1, 1500]   ]
+[  ]
 Picked:
-[   [app-1, 1500]   ]
- app-1 EVICTED @933.406
-A model of size 1300 was allocated to app-2
+[  ]
+ ******** Provisionally Evict (1250)************
+Candids:
+[  ]
+Picked:
+[  ]
+A model of size 1000 was allocated to app-2
 Event: STARTED @960.4  ==>> app-4 Free Memory:200.0
 Event: FINISHED @966.5  ==>> app-5 Free Memory:200.0
 Event: STARTED @991.2  ==>> app-4 Free Memory:200.0
@@ -89,25 +139,24 @@ Event: FINISHED @1174.7  ==>> app-2 Free Memory:200.0
 Event: STARTED @1219.8  ==>> app-3 Free Memory:200.0
  ******** Provisionally Evict (1700)************
 Candids:
-[   [app-2, 1300]    [app-4, 1300]   ]
-Picked:
-[   [app-2, 1300]   ]
- ******** Provisionally Evict (1500)************
+[   [app-2, 1000]    [app-4, 1600]   ]
+current required memory[0]: 1700
+new required memory: 100
 Candids:
-[   [app-2, 1300]    [app-4, 1300]   ]
-Picked:
-[   [app-2, 1300]   ]
- ******** Provisionally Evict (1300)************
+[   [app-2, 1000]   ]
+current required memory[1]: 100
+new required memory: -900
 Candids:
-[   [app-2, 1300]    [app-4, 1300]   ]
+[  ]
 Picked:
-[   [app-2, 1300]   ]
+[   [app-4, 1600]    [app-2, 1000]   ]
+ app-4 EVICTED @1219.791
  app-2 EVICTED @1219.791
-A model of size 1300 was allocated to app-3
-Event: STARTED @1221.5  ==>> app-5 Free Memory:200.0
-Event: STARTED @1282.1  ==>> app-3 Free Memory:200.0
-Event: FINISHED @1321.5  ==>> app-5 Free Memory:200.0
-Event: STARTED @1344.8  ==>> app-5 Free Memory:200.0
+A model of size 1700 was allocated to app-3
+Event: STARTED @1221.5  ==>> app-5 Free Memory:1100.0
+Event: STARTED @1282.1  ==>> app-3 Free Memory:1100.0
+Event: FINISHED @1321.5  ==>> app-5 Free Memory:1100.0
+Event: STARTED @1344.8  ==>> app-5 Free Memory:1100.0
 A model of size 1700 was allocated to app-5
-Event: FINISHED @1382.1  ==>> app-3 Free Memory:200.0
-Event: FINISHED @1444.8  ==>> app-5 Free Memory:200.0
+Event: FINISHED @1382.1  ==>> app-3 Free Memory:1100.0
+Event: FINISHED @1444.8  ==>> app-5 Free Memory:1100.0

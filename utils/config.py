@@ -21,6 +21,10 @@ def init(path_to_config='./config.json'):
     global eviction_method 
     global path_to_workloads
     global log
+
+    global temp1, temp2
+    temp1 = None
+    temp2 = None
     
     log = open('./output/log.txt','w')
     try:
@@ -49,6 +53,8 @@ def init(path_to_config='./config.json'):
     window = data['global_parameters'][0]['window']
     eviction_method = data['global_parameters'][0]['eviction_method']
     path_to_workloads = data['environment_settings'][0]['path_to_workloads']
+
+    return temp1, temp2
 
 
 

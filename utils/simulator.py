@@ -109,6 +109,9 @@ class Simulator:
         app.stats['finish_times'].append(app.finish_time)        
         app.stats['evicted_times'].append(None)
         app.stats['allocated_memory'].append(app.loaded_model_size)
+
+        app.timeseries['time'].append(config.time.get_time())
+        app.timeseries['allocated_memory'].append(app.loaded_model_size)
         
         if not allocated: 
             self.stats['missed'] += 1
@@ -127,6 +130,9 @@ class Simulator:
         candid.stats['finish_times'].append(None)
         candid.stats['evicted_times'].append(candid.evict_time)
         candid.stats['allocated_memory'].append(candid.loaded_model_size)
+
+        candid.timeseries['time'].append(config.time.get_time())
+        candid.timeseries['allocated_memory'].append(candid.loaded_model_size)
 
         s = f'\n {candid.name} EVICTED @{config.time.get_time()}'
         config.log.write(s)
@@ -164,13 +170,21 @@ class Simulator:
         config.log.write(s)
 
         picked =[]
-        gained_memory = 0
-
-        while candids and gained_memory < required_memory:
+        
+        count = 0
+        while candids and required_memory > 0:            
+            s =f'\ncurrent required memory[{count}]: {required_memory}'                        
             candid, candids = self.pick(candids, required_memory)
-            picked.append(candid)
-            gained_memory += candid.loaded_model_size
-        is_enough_space = bool(gained_memory >= required_memory)
+            picked.append(candid)            
+            required_memory -= candid.loaded_model_size
+            s += f'\nnew required memory: {required_memory}'
+            s+='\nCandids:\n[ '            
+            for candid in candids:
+                s += f'  [{candid.name}, {candid.loaded_model_size}]  ' 
+            s+=' ]'       
+            config.log.write(s)                       
+            count +=1 
+        is_enough_space = bool(required_memory<=0)
 
         s ='\nPicked:\n[ '
         for candid in picked:
@@ -186,7 +200,8 @@ class Simulator:
     def first_fit(self, candids):
         candids.sort(reverse=True)
         picked = candids[0]
-        return picked, candids.remove(picked)
+        candids.remove(picked)
+        return picked, candids
         
     
     def best_fit(self, candids, required_memory):
@@ -205,8 +220,9 @@ class Simulator:
         else:
             needed.sort(key= self.get_2nd_element, reverse=True)            
             picked = needed[0][0]
-        
-        return picked, candids.remove(picked)
+              
+        candids.remove(picked)
+        return picked, candids
     
     def report(self):
         df_report = pd.DataFrame(columns = ['app','requested_times','finish_times',
@@ -233,11 +249,21 @@ class Simulator:
         df_report = df_report.reset_index(drop=True)               
         df_report.to_csv('./output/report.csv', index =False)
     
-    def plot_mem_usage(self):
-        plt.figure()
-        for app in config.apps:                     
-            plt.step(app.stats['requested_times'], app.stats['allocated_memory'], '-o',where='post',label = app.name)
+    def plot_mem_usage(self, apps):
+        plt.figure(figsize=(16,4)) 
+        markers = ['o','x','<','>','+'] 
+        count = 0      
+        for app in config.apps:            
+            if app.name in apps:                 
+                plt.step(app.timeseries['time'], app.timeseries['allocated_memory'],
+                 marker= markers[count], markersize = 10,
+                 linestyle='-',
+                 where='post',label = app.name)
+            count+=1
+            count = count%(len(markers))
+
         plt.legend()
         plt.xlabel('Time')
-        plt.ylabel('Memory Usage')
+        plt.ylabel('Memory Usage')            
+        plt.savefig('./output/figures/mem_usage.pdf',dpi=300)
         plt.show()

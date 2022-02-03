@@ -24,6 +24,8 @@ class Application:
                         'evicted_times':[],
                         'allocated_memory':[],                       
                     }
+        self.timeseries = {'time':[0],
+        'allocated_memory':[0]}
     
     def __gt__(self, other):
         return self.loaded_model_size > other.loaded_model_size   

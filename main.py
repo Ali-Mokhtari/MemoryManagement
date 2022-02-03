@@ -16,7 +16,7 @@ sim = Simulator()
 sim.initialize(0)
 sim.run()
 sim.report()
-sim.plot_mem_usage()
+sim.plot_mem_usage(['app-1','app-4','app-5'])
 config.log.close()
 
 print(sim.stats)
