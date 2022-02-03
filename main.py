@@ -20,10 +20,3 @@ sim.plot_mem_usage()
 config.log.close()
 
 print(sim.stats)
-
-
-
-
-
-
-

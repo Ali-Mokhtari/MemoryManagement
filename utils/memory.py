@@ -34,10 +34,6 @@ class Memory:
     def release(self, value):
         self.free += value
         self.used -= value
-            
-    
-
-        
 
 
 def test():

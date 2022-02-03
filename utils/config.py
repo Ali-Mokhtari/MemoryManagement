@@ -17,7 +17,8 @@ from utils.time import Time
 def init(path_to_config='./config.json'):
     global memory, time, event_queue     
     global apps, apps_names
-    global window  
+    global window
+    global eviction_method 
     global path_to_workloads
     global log
     
@@ -46,6 +47,7 @@ def init(path_to_config='./config.json'):
         apps_names.append(app_name)
 
     window = data['global_parameters'][0]['window']
+    eviction_method = data['global_parameters'][0]['eviction_method']
     path_to_workloads = data['environment_settings'][0]['path_to_workloads']
 
 

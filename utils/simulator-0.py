@@ -13,10 +13,14 @@ from utils.event import Event, EventTypes
 
 
 class Simulator:
+    
 
     def __init__(self):                             
         self.stats = {'missed':0,}
         
+
+
+
     def read_workload(self, workload_id):
         path_to_workload = f'{config.path_to_workloads}/workload-{workload_id}.csv'
         workload = pd.read_csv(path_to_workload)
@@ -38,12 +42,14 @@ class Simulator:
             event = config.event_queue.get_first_event()
             app = event.event_details
             config.time.set_time(event.time)
-            s = f'\nEvent: {event.event_type.name} @{event.time:3.1f}'
-            s += f'  ==>> {app.name} Free Memory:{config.memory.free}'                       
-            config.log.write(s)
+            s = f'\n\nEvent: {event.event_type.name} @{event.time:3.1f}\n'
+            s += f'--- App:{app.name} Free:{config.memory.free}\n'
+            s += '=======================================================\n'
+
+
             if event.event_type == EventTypes.STARTED:
                 if app.status != AppStatus.AGGRESSIVE:                         
-                    self.allocate(app)
+                    self.allocate(app, event.time)
                 else:
                     for e in config.event_queue.event_list:
                         if e.event_type == EventTypes.FINISHED and e.event_details.name == app.name:
@@ -54,20 +60,24 @@ class Simulator:
                             config.event_queue.add_event(new_event)
                             break
 
-            elif event.event_type == EventTypes.FINISHED:
-                app.status = AppStatus.MINIMAL                
-        
+
+                s += f'Allocated: {app.loaded_model_size} Free:{config.memory.size}'
             
+            elif event.event_type == EventTypes.FINISHED:
+                app.status = AppStatus.MINIMAL
+                s += f'Allocated: {app.loaded_model_size} Free:{config.memory.size}'
+        
+            config.log.write(s)
          
 
-    def allocate(self, app):
+    def allocate(self, app, time):
         allocated = False  
         for best_model_size in reversed(app.models):
 
             if best_model_size == app.loaded_model_size:
                 app.status = AppStatus.AGGRESSIVE
-                app.start_time = config.time.get_time()             
-                app.finish_time = config.time.get_time() + 2*config.window 
+                app.start_time = time             
+                app.finish_time = time + 2*config.window 
                 event = Event(app.finish_time, EventTypes.FINISHED, app)
                 config.event_queue.add_event(event)
                 allocated = True
@@ -83,132 +93,101 @@ class Simulator:
                 config.memory.allocate(best_model_size)
                 app.status = AppStatus.AGGRESSIVE
                 app.loaded_model_size = best_model_size
-                app.finish_time = config.time.get_time() + 2*config.window 
+                app.finish_time = time + 2*config.window 
                 event = Event(app.finish_time, EventTypes.FINISHED, app)
                 config.event_queue.add_event(event)
                 allocated = True                
                 break      
 
             else:
-                is_enough_space, candids = self.provisionally_evict(best_model_size)
+                is_enough_space = self.evict_apps(best_model_size)
                 if is_enough_space:
-                    for candid in candids:
-                        self.evict(candid)
                     config.memory.allocate(best_model_size)
                     app.status = AppStatus.AGGRESSIVE
-                    app.start_time = config.time.get_time()             
-                    app.finish_time = config.time.get_time() + 2*config.window 
+                    app.start_time = time             
+                    app.finish_time = time + 2*config.window 
                     app.loaded_model_size = best_model_size
                     event = Event(app.finish_time, EventTypes.FINISHED, app)
                     config.event_queue.add_event(event)
                     allocated = True
-                    
                     break
-           
-        app.stats['requested_times'].append(config.time.get_time())
+            
+        app.stats['requested_times'].append(time)
         app.stats['finish_times'].append(app.finish_time)        
         app.stats['evicted_times'].append(None)
         app.stats['allocated_memory'].append(app.loaded_model_size)
         
         if not allocated: 
             self.stats['missed'] += 1
-            s = f'\n{app.name} cancelled'
+         
+
+    def evict_apps_sol1(self, required_memory):        
+        candids = self.candidates_for_evicting()        
+        candids.sort(reverse =True)
+        
+        for candid in candids:
+            config.memory.release(candid.loaded_model_size)
+            candid.loaded_model_size = 0.0 
+            candid.status = AppStatus.MINIMAL
+            candid.evict_time = config.time.get_time()
+
+            candid.stats['requested_times'].append(None)
+            candid.stats['finish_times'].append(None)
+            candid.stats['evicted_times'].append(candid.evict_time)
+            candid.stats['allocated_memory'].append(candid.loaded_model_size)
+            
+            if config.memory.free >= required_memory:
+                break    
+        
+        is_enough_space = (required_memory <= config.memory.free)
+        return is_enough_space
+    
+    def evict_apps_sol2(self, required_memory):        
+        candids = self.candidates_for_evicting()        
+        candid = self.choose_a_candid_sol2(candids, required_memory)
+        
+        if config.memory.free + candid.loaded_model_size >= required_memory:
+            config.memory.release(candid.loaded_model_size)
+            candid.loaded_model_size = 0.0 
+            candid.status = AppStatus.MINIMAL
+            candid.evict_time = config.time.get_time()
+
+            candid.stats['requested_times'].append(None)
+            candid.stats['finish_times'].append(None)
+            candid.stats['evicted_times'].append(candid.evict_time)
+            candid.stats['allocated_memory'].append(candid.loaded_model_size)
+        
         else:
-            s = f'\nA model of size {best_model_size} was allocated to {app.name}'
-        config.log.write(s)
-                
-    def evict(self, candid):        
-        config.memory.release(candid.loaded_model_size)
-        candid.loaded_model_size = 0.0 
-        candid.status = AppStatus.MINIMAL
-        candid.evict_time = config.time.get_time()
+            
+            
+        
+        is_enough_space = (required_memory <= config.memory.free)
+        return is_enough_space
+    
+    def get_diff(self,candid_diff):
+        return candid_diff[1]
+    
+    def choose_a_candid_sol2(self, candids, require_memory):
+        candid_diffs = []
+        for candid in candids:
+            diff = require_memory - candid.loaded_model_size
+            candid_diffs.append([candid,diff])
+        sufficient_models = [[candid,diff] for [candid,diff] in candid_diffs if diff>=0]        
+        if sufficient_models:
+            sufficient_models.sort(key= self.get_diff)
+            return sufficient_models[0][0]
+        else:
+            candid_diffs.sort(key= self.get_diff, reverse=True)
+            return candid_diffs[0][0]
 
-        candid.stats['requested_times'].append(None)
-        candid.stats['finish_times'].append(None)
-        candid.stats['evicted_times'].append(candid.evict_time)
-        candid.stats['allocated_memory'].append(candid.loaded_model_size)
 
-        s = f'\n {candid.name} EVICTED @{config.time.get_time()}'
-        config.log.write(s)
-
-
-    def candidates(self):
+    def candidates_for_evicting(self):
         candids = []
         for app in  config.apps:
             if app.status != AppStatus.AGGRESSIVE and app.loaded_model_size > 0.0:
-                candids.append(app)
-        return candids    
-
-    def pick(self,candids, required_memory):
-        try:
-            if config.eviction_method =='first_fit':
-                picked, candids = self.first_fit(candids)
-            elif config.eviction_method =='best_fit':
-                picked, candids = self.best_fit(candids, required_memory)
-            else:
-                raise Exception(f'ERROR[simulator.py --> pick()]:The {config.eviction_method} as eviction method has not defined!')
-        except Exception as err:
-            print(err)
-            sys.exit()
+                candids.append(app)        
         
-        return picked, candids
-      
-    
-    def provisionally_evict(self, required_memory):                      
-        candids = self.candidates()
-        s=f'\n ******** Provisionally Evict ({required_memory})************'
-        s+='\nCandids:\n[ '
-        for candid in candids:
-            s += f'  [{candid.name}, {candid.loaded_model_size}]  ' 
-        s+=' ]'       
-        config.log.write(s)
-
-        picked =[]
-        gained_memory = 0
-
-        while candids and gained_memory < required_memory:
-            candid, candids = self.pick(candids, required_memory)
-            picked.append(candid)
-            gained_memory += candid.loaded_model_size
-        is_enough_space = bool(gained_memory >= required_memory)
-
-        s ='\nPicked:\n[ '
-        for candid in picked:
-            s += f'  [{candid.name}, {candid.loaded_model_size}]  '
-        s+=' ]'       
-        config.log.write(s)
-
-        return is_enough_space, picked
-    
-     
-    
-    def get_2nd_element(self,candid_difference):
-        return candid_difference[1]
-
-    def first_fit(self, candids):
-        candids.sort(reverse=True)
-        picked = candids[0]
-        return picked, candids.remove(picked)
-        
-    
-    def best_fit(self, candids, required_memory):
-        remainders = []
-        needed = []
-        for candid in candids:
-            difference = candid.loaded_model_size - required_memory
-            if difference >= 0:
-                remainders.append([candid, difference])
-            else:
-                needed.append([candid, difference])           
-        
-        if remainders:            
-            remainders.sort(key= self.get_2nd_element)  
-            picked = remainders[0][0]            
-        else:
-            needed.sort(key= self.get_2nd_element, reverse=True)            
-            picked = needed[0][0]
-        
-        return picked, candids.remove(picked)
+        return candids
     
     def report(self):
         df_report = pd.DataFrame(columns = ['app','requested_times','finish_times',
