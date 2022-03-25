@@ -6,7 +6,7 @@ Created on Jan, 18, 2022
 
 
 import utils.config as config
-from utils.simulator import Simulator
+from utils.sol4 import Simulator
 from utils.workload import Workload
 
 

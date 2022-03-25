@@ -23,11 +23,11 @@ class Memory:
         return self.free
     
     def allocate(self, value):
-        try:
-            assert(self.free >= value), f'ERROR[memory.py -> hold()]: The requested memory size is not available' 
-        except AssertionError as err_msg:
-            print(err_msg)            
-            sys.exit()        
+        # try:
+        #     assert(self.free >= value), f'ERROR[memory.py -> allocate()]: The requested memory size is not available' 
+        # except AssertionError as err_msg:
+        #     print(err_msg)            
+        #     sys.exit()        
         self.free -= value
         self.used += value
     

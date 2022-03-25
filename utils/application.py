@@ -19,6 +19,8 @@ class Application:
         self.finish_time = None
         self.evict_time = None
         self.loaded_model_size = 0
+        self.prt = []
+        self.nxt_rq = None
         self.stats = {'requested_times': [], 
                         'finish_times':[],
                         'evicted_times':[],
